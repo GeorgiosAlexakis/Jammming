@@ -1,5 +1,4 @@
-const clientID = '<REPLACE_WITH_ACTUAL_CLIENTID>';
-const redirectURI = 'http://localhost:3000/';
+const redirectURI = `http://${process.env.REACT_APP_HOSTNAME}:${process.env.REACT_APP_PORT}/`;
 
 const Spotify = {
     _headers: {},
@@ -33,8 +32,7 @@ const Spotify = {
             } else {
 
                 /* 3rd Condition: accessToken is empty and not in the URL */
-                window.location.assign(`https://accounts.spotify.com/authorize?client_id=${clientID}&response_type=token&scope=playlist-modify-public&redirect_uri=${redirectURI}`);
-                // return this.accessToken;
+                window.location.assign(`https://accounts.spotify.com/authorize?client_id=${process.env.REACT_APP_CLIENT_ID}&response_type=token&scope=playlist-modify-public&redirect_uri=${redirectURI}`);
             }
         }
 
@@ -53,35 +51,34 @@ const Spotify = {
         return this._expiresIn;
     },
 
-    search(term) {
-        return fetch(`https://api.spotify.com/v1/search?type=track&q=${term}`, {
-            headers: this.headers
-        }).then(response => {
+    async search(term) {
+        try {
+            const response = await fetch(`https://api.spotify.com/v1/search?type=track&q=${term}`, {
+                headers: this.headers
+            });
 
             // Handles success
             if (response.ok) {
-              return response.json();
+                const jsonResponse = await response.json();
+                if (jsonResponse.tracks && jsonResponse.tracks.items) {
+                    return jsonResponse.tracks.items.map(track => {
+                      return {
+                        id: track.id,
+                        name: track.name,
+                        artist: track.artists[0].name,
+                        album: track.album.name,
+                        uri: track.uri
+                      };
+                    });
+                  } else {
+                      return [];
+                  }
+            } else {
+                throw new Error('Request failed!');
             }
-
-            // Handles errors
-            throw new Error('Request failed!');
-          }, networkError => {
-            console.log(networkError.message);
-          }).then(jsonResponse => {
-            if (jsonResponse.tracks && jsonResponse.tracks.items) {
-                return jsonResponse.tracks.items.map(track => {
-                  return {
-                    id: track.id,
-                    name: track.name,
-                    artist: track.artists[0].name,
-                    album: track.album.name,
-                    uri: track.uri
-                  };
-                });
-              } else {
-                  return [];
-              }
-          });
+        } catch (error) {
+            console.log(error);
+        }
     },
 
     async getCurrentUserProfile() {

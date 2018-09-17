@@ -69,13 +69,9 @@ class App extends Component {
   }
 
   addTrack(track) {
-    let exists = false;
-    for (let index = 0; index < this.state.playlistTracks.length && !exists; index++) {
-      exists = (this.state.playlistTracks[index].id === track.id);
-    }
+    let exists = this.state.playlistTracks.some(playlistTrack => playlistTrack.id === track.id);
     if (!exists) {
-      let newPlaylistTracks = this.state.playlistTracks;
-      newPlaylistTracks.push(track);
+      let newPlaylistTracks = this.state.playlistTracks.concat(track);
       this.setState({playlistTracks: newPlaylistTracks});
     }
   }
